@@ -1,0 +1,10 @@
+html, body, #app {
+  height: 100%;
+  margin: 0;
+}
+body {
+  font-family: 'Helvetica Neue', 'PingFang TC', 'Noto Sans TC', Arial, sans-serif;
+  background: #f5f7fa;
+  color: #1f2937;
+}
+* { box-sizing: border-box; }
