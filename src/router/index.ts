@@ -11,7 +11,6 @@ const USER_KEY = 'lc_user'
 const routes = [
   { path: '/', redirect: '/login' },
 
-  // ── 獨立打卡頁（LIFF 直接開，不需登入守衛）─────────────────────────────────
   { path: '/punch',   name: 'punch',   component: Punch,       meta: { public: true } },
   { path: '/history', name: 'history-liff', component: HistoryLiff, meta: { public: true } },
 
@@ -47,10 +46,10 @@ const routes = [
 const router = createRouter({ history: createWebHistory(), routes })
 
 router.beforeEach((to) => {
-  if (to.meta.public) return  // 公開頁面直接放行
+  if (to.meta.public) return
 
   const isLoggedIn = !!sessionStorage.getItem(TOKEN_KEY)
-  let user = null
+  let user: { role?: string } | null = null
   try { user = JSON.parse(sessionStorage.getItem(USER_KEY) || 'null') } catch {}
 
   if (!isLoggedIn) return { name: 'login' }

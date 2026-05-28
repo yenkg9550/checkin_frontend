@@ -1,4 +1,13 @@
 import axios from 'axios'
+import type {
+  AuthResponse,
+  AttendanceRecord,
+  Employee,
+  CheckInPayload,
+  OverridePayload,
+  DailyReportRecord,
+  Role,
+} from '@/types'
 
 const TOKEN_KEY = 'lc_token'
 
@@ -29,29 +38,26 @@ http.interceptors.response.use(
   }
 )
 
-// ── 認證 ──────────────────────────────────────────────────────────────────────
-export const postLineLogin = (id_token) =>
+export const postLineLogin = (id_token: string): Promise<AuthResponse> =>
   http.post('/auth/line', { id_token }).then((r) => r.data)
 
-// ── 打卡 ──────────────────────────────────────────────────────────────────────
-export const postCheckIn = (payload) =>
+export const postCheckIn = (payload: CheckInPayload): Promise<AttendanceRecord> =>
   http.post('/attendance', payload).then((r) => r.data)
 
-export const fetchTodayStatus = () =>
+export const fetchTodayStatus = (): Promise<AttendanceRecord[]> =>
   http.get('/attendance/today').then((r) => r.data)
 
-export const fetchMyHistory = (limit = 30) =>
+export const fetchMyHistory = (limit = 30): Promise<AttendanceRecord[]> =>
   http.get('/attendance/me', { params: { limit } }).then((r) => r.data)
 
-// ── 管理後台 ──────────────────────────────────────────────────────────────────
-export const fetchDailyReport = (report_date) =>
+export const fetchDailyReport = (report_date: string): Promise<DailyReportRecord[]> =>
   http.get('/admin/report', { params: { report_date } }).then((r) => r.data)
 
-export const fetchEmployees = () =>
+export const fetchEmployees = (): Promise<Employee[]> =>
   http.get('/admin/employees').then((r) => r.data)
 
-export const updateEmployeeRole = (id, role) =>
+export const updateEmployeeRole = (id: number, role: Role): Promise<Employee> =>
   http.patch(`/admin/employees/${id}/role`, null, { params: { role } }).then((r) => r.data)
 
-export const postOverride = (payload) =>
+export const postOverride = (payload: OverridePayload): Promise<AttendanceRecord> =>
   http.post('/admin/override', payload).then((r) => r.data)

@@ -2,14 +2,14 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
-import zhTw from 'element-plus/dist/locale/zh-tw.mjs'
+import zhTw from 'element-plus/es/locale/lang/zh-tw'
 import 'element-plus/dist/index.css'
 
 import App from './App.vue'
 import router from './router'
 import './styles/global.css'
 
-function showStartupError(message = '頁面載入失敗，請重新載入') {
+function showStartupError(message = '頁面載入失敗，請重新載入'): void {
   const el = document.getElementById('app')
   if (!el) return
   el.innerHTML = `
@@ -32,8 +32,7 @@ app.use(createPinia())
 app.use(router)
 app.use(ElementPlus, { locale: zhTw })
 
-// 全域錯誤捕捉，防止空白畫面
-app.config.errorHandler = (err) => {
+app.config.errorHandler = (err: unknown) => {
   console.error(err)
   showStartupError('發生錯誤，請重新載入')
 }
@@ -47,7 +46,7 @@ router.isReady()
       if (appEl && !appEl.innerHTML.trim()) showStartupError()
     }, 8000)
   })
-  .catch((err) => {
+  .catch((err: unknown) => {
     console.error(err)
     showStartupError('路由載入失敗，請重新載入')
   })

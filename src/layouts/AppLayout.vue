@@ -1,23 +1,22 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import liff from '@line/liff'
-import { useAuthStore } from '@/stores/auth.js'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const auth = useAuthStore()
 
-const pageTitle = computed(() => route.meta?.title || '打卡系統')
+const pageTitle = computed<string>(() => route.meta?.title as string || '打卡系統')
 
-async function handleLogout() {
+async function handleLogout(): Promise<void> {
   await ElMessageBox.confirm('確定要登出嗎？', '登出', {
     confirmButtonText: '登出',
     cancelButtonText: '取消',
     type: 'warning',
   })
   auth.logout()
-  // LIFF App 登出後直接關閉視窗，讓使用者重新從 LINE 開啟
   if (liff.isInClient()) {
     liff.closeWindow()
   } else {
@@ -51,7 +50,6 @@ async function handleLogout() {
       </router-view>
     </el-main>
 
-    <!-- 底部導航 -->
     <el-footer class="bottom-nav" height="60px">
       <router-link to="/app/checkin" class="nav-item" :class="{ active: route.name === 'checkin' }">
         <el-icon size="22"><Clock /></el-icon>

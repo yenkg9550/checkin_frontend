@@ -1,9 +1,10 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { fetchMyHistory } from '@/api/http.js'
+import { fetchMyHistory } from '@/api/http'
+import type { AttendanceRecord } from '@/types'
 
-const records = ref([])
-const loading = ref(true)
+const records = ref<AttendanceRecord[]>([])
+const loading = ref<boolean>(true)
 
 onMounted(async () => {
   try {
@@ -13,23 +14,22 @@ onMounted(async () => {
   }
 })
 
-function utc(dt) {
+function utc(dt: string): Date {
   return new Date(dt.endsWith('Z') ? dt : dt + 'Z')
 }
-function formatDate(dt) {
+function formatDate(dt: string): string {
   return utc(dt).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric', weekday: 'short' })
 }
-function formatTime(dt) {
+function formatTime(dt: string): string {
   return utc(dt).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
-// 依日期分組
-function groupByDate(records) {
-  const map = new Map()
+function groupByDate(records: AttendanceRecord[]): [string, AttendanceRecord[]][] {
+  const map = new Map<string, AttendanceRecord[]>()
   for (const r of records) {
     const key = utc(r.checked_at).toLocaleDateString('zh-TW')
     if (!map.has(key)) map.set(key, [])
-    map.get(key).push(r)
+    map.get(key)!.push(r)
   }
   return [...map.entries()]
 }

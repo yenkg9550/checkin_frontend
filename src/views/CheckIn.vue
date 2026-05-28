@@ -1,41 +1,43 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { postCheckIn, fetchTodayStatus } from '@/api/http.js'
-import { useAuthStore } from '@/stores/auth.js'
+import { postCheckIn, fetchTodayStatus } from '@/api/http'
+import { useAuthStore } from '@/stores/auth'
+import type { AttendanceRecord, CheckType, GpsCoords } from '@/types'
 
 const auth = useAuthStore()
-const loading = ref(false)
-const gpsLoading = ref(false)
-const pageLoading = ref(true)
-const loadError = ref('')
-const todayRecords = ref([])
+const loading = ref<boolean>(false)
+const gpsLoading = ref<boolean>(false)
+const pageLoading = ref<boolean>(true)
+const loadError = ref<string>('')
+const todayRecords = ref<AttendanceRecord[]>([])
 
-const CLOCK_IN = 'clock_in'
-const CLOCK_OUT = 'clock_out'
+const CLOCK_IN: CheckType = 'clock_in'
+const CLOCK_OUT: CheckType = 'clock_out'
 
-const hasClockedIn = ref(false)
-const hasClockedOut = ref(false)
+const hasClockedIn = ref<boolean>(false)
+const hasClockedOut = ref<boolean>(false)
 
 onMounted(async () => {
   await loadToday()
 })
 
-async function loadToday() {
+async function loadToday(): Promise<void> {
   pageLoading.value = true
   loadError.value = ''
   try {
     todayRecords.value = await fetchTodayStatus()
     hasClockedIn.value = todayRecords.value.some(r => r.check_type === CLOCK_IN)
     hasClockedOut.value = todayRecords.value.some(r => r.check_type === CLOCK_OUT)
-  } catch (e) {
-    loadError.value = e?.response?.data?.detail || e.message || '無法載入打卡狀態'
+  } catch (e: unknown) {
+    const err = e as { response?: { data?: { detail?: string } }; message?: string }
+    loadError.value = err?.response?.data?.detail || err.message || '無法載入打卡狀態'
   } finally {
     pageLoading.value = false
   }
 }
 
-async function getGPS() {
+async function getGPS(): Promise<GpsCoords> {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) return reject(new Error('裝置不支援 GPS'))
     gpsLoading.value = true
@@ -44,7 +46,7 @@ async function getGPS() {
         gpsLoading.value = false
         resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude })
       },
-      (err) => {
+      () => {
         gpsLoading.value = false
         reject(new Error('無法取得位置，請確認已允許定位權限'))
       },
@@ -53,22 +55,23 @@ async function getGPS() {
   })
 }
 
-async function handleCheck(type) {
+async function handleCheck(type: CheckType): Promise<void> {
   loading.value = true
   try {
     const { lat, lng } = await getGPS()
     await postCheckIn({ check_type: type, lat, lng })
     ElMessage.success(type === CLOCK_IN ? '✅ 上班打卡成功！' : '✅ 下班打卡成功！')
     await loadToday()
-  } catch (e) {
-    const msg = e?.response?.data?.detail || e.message || '打卡失敗'
+  } catch (e: unknown) {
+    const err = e as { response?: { data?: { detail?: string } }; message?: string }
+    const msg = err?.response?.data?.detail || err.message || '打卡失敗'
     ElMessage.error(msg)
   } finally {
     loading.value = false
   }
 }
 
-function formatTime(dt) {
+function formatTime(dt: string): string {
   const d = new Date(dt.endsWith('Z') ? dt : dt + 'Z')
   return d.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false })
 }
@@ -88,7 +91,6 @@ function formatTime(dt) {
     </div>
 
     <template v-else>
-    <!-- 使用者資訊 -->
     <el-card class="user-card" shadow="never">
       <div class="user-info">
         <img v-if="auth.pictureUrl" :src="auth.pictureUrl" class="avatar" />
@@ -102,7 +104,6 @@ function formatTime(dt) {
       </div>
     </el-card>
 
-    <!-- 打卡按鈕 -->
     <div class="btn-group">
       <el-button
         type="primary"
@@ -116,7 +117,7 @@ function formatTime(dt) {
         <div>
           <div class="btn-label">上班打卡</div>
           <div class="btn-sub" v-if="hasClockedIn">
-            {{ formatTime(todayRecords.find(r => r.check_type === CLOCK_IN)?.checked_at) }} 已打卡
+            {{ formatTime(todayRecords.find(r => r.check_type === CLOCK_IN)!.checked_at) }} 已打卡
           </div>
           <div class="btn-sub" v-else>點此上班打卡</div>
         </div>
@@ -134,14 +135,13 @@ function formatTime(dt) {
         <div>
           <div class="btn-label">下班打卡</div>
           <div class="btn-sub" v-if="hasClockedOut">
-            {{ formatTime(todayRecords.find(r => r.check_type === CLOCK_OUT)?.checked_at) }} 已打卡
+            {{ formatTime(todayRecords.find(r => r.check_type === CLOCK_OUT)!.checked_at) }} 已打卡
           </div>
           <div class="btn-sub" v-else>點此下班打卡</div>
         </div>
       </el-button>
     </div>
 
-    <!-- 今日紀錄 -->
     <el-card v-if="todayRecords.length" class="today-card" shadow="never">
       <template #header><span class="card-title">今日打卡紀錄</span></template>
       <div v-for="r in todayRecords" :key="r.id" class="record-row">

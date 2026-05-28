@@ -1,17 +1,18 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { fetchDailyReport, fetchEmployees } from '@/api/http.js'
+import { fetchDailyReport, fetchEmployees } from '@/api/http'
 import { useRouter } from 'vue-router'
+import type { Employee, DailyReportRecord, DashboardRow, RowStatus } from '@/types'
 
 const router = useRouter()
-const rawRecords = ref([])
-const employees  = ref([])
-const loading    = ref(true)
-const selectedDate = ref(new Date().toISOString().slice(0, 10))
+const rawRecords = ref<DailyReportRecord[]>([])
+const employees  = ref<Employee[]>([])
+const loading    = ref<boolean>(true)
+const selectedDate = ref<string>(new Date().toISOString().slice(0, 10))
 
 onMounted(() => loadAll())
 
-async function loadAll() {
+async function loadAll(): Promise<void> {
   loading.value = true
   try {
     [rawRecords.value, employees.value] = await Promise.all([
@@ -23,8 +24,8 @@ async function loadAll() {
   }
 }
 
-const rows = computed(() => {
-  const map = {}
+const rows = computed<DashboardRow[]>(() => {
+  const map: Record<number, DashboardRow> = {}
   for (const r of rawRecords.value) {
     if (!map[r.employee_id]) {
       map[r.employee_id] = {
@@ -41,16 +42,16 @@ const rows = computed(() => {
   return Object.values(map)
 })
 
-const presentCount = computed(() => rows.value.filter(r => r.clock_in).length)
-const absentCount  = computed(() => employees.value.length - presentCount.value)
+const presentCount = computed<number>(() => rows.value.filter(r => r.clock_in).length)
+const absentCount  = computed<number>(() => employees.value.length - presentCount.value)
 
-function fmt(dt) {
+function fmt(dt: string | undefined): string {
   if (!dt) return '—'
   const d = new Date(dt.endsWith('Z') ? dt : dt + 'Z')
   return d.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
-function rowStatus(row) {
+function rowStatus(row: DashboardRow): RowStatus {
   if (row.clock_in && row.clock_out) return { label: '已完成', type: 'success' }
   if (row.clock_in)                  return { label: '上班中', type: 'warning' }
   return                                    { label: '未打卡', type: 'info'    }

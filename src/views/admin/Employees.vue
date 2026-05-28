@@ -1,13 +1,26 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
-import { fetchEmployees, updateEmployeeRole, postOverride } from '@/api/http.js'
+import { fetchEmployees, updateEmployeeRole, postOverride } from '@/api/http'
+import type { Employee, CheckType, Role } from '@/types'
 
-const employees = ref([])
-const loading = ref(true)
+const employees = ref<Employee[]>([])
+const loading = ref<boolean>(true)
 
-const overrideDialog = ref(false)
-const overrideForm = reactive({ employee_id: null, check_type: 'clock_in', override_at: '', reason: '' })
+interface OverrideForm {
+  employee_id: number | null
+  check_type: CheckType
+  override_at: string
+  reason: string
+}
+
+const overrideDialog = ref<boolean>(false)
+const overrideForm = reactive<OverrideForm>({
+  employee_id: null,
+  check_type: 'clock_in',
+  override_at: '',
+  reason: '',
+})
 
 onMounted(async () => {
   try {
@@ -17,32 +30,35 @@ onMounted(async () => {
   }
 })
 
-async function changeRole(emp, role) {
+async function changeRole(emp: Employee, role: Role): Promise<void> {
   try {
     await updateEmployeeRole(emp.id, role)
     emp.role = role
     ElMessage.success('角色已更新')
-  } catch (e) {
+  } catch {
     ElMessage.error('更新失敗')
   }
 }
 
-function openOverride(emp) {
+function openOverride(emp: Employee): void {
   overrideForm.employee_id = emp.id
   overrideForm.override_at = new Date().toISOString().slice(0, 16)
   overrideDialog.value = true
 }
 
-async function submitOverride() {
+async function submitOverride(): Promise<void> {
   try {
     await postOverride({
-      ...overrideForm,
+      employee_id: overrideForm.employee_id!,
+      check_type: overrideForm.check_type,
       override_at: new Date(overrideForm.override_at).toISOString(),
+      reason: overrideForm.reason,
     })
     ElMessage.success('補打卡成功')
     overrideDialog.value = false
-  } catch (e) {
-    ElMessage.error(e?.response?.data?.detail || '補打卡失敗')
+  } catch (e: unknown) {
+    const err = e as { response?: { data?: { detail?: string } } }
+    ElMessage.error(err?.response?.data?.detail || '補打卡失敗')
   }
 }
 </script>
@@ -64,7 +80,7 @@ async function submitOverride() {
       </el-table-column>
       <el-table-column label="角色" width="120">
         <template #default="{ row }">
-          <el-select :model-value="row.role" size="small" @change="(v) => changeRole(row, v)">
+          <el-select :model-value="row.role" size="small" @change="(v: Role) => changeRole(row, v)">
             <el-option label="員工" value="employee" />
             <el-option label="管理員" value="admin" />
           </el-select>
@@ -82,7 +98,6 @@ async function submitOverride() {
       </el-table-column>
     </el-table>
 
-    <!-- 補打卡 Dialog -->
     <el-dialog v-model="overrideDialog" title="補打卡" width="320px">
       <el-form :model="overrideForm" label-position="top">
         <el-form-item label="類型">

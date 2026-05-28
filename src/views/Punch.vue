@@ -1,73 +1,64 @@
-<script setup>
-import { ref, computed, onMounted } from 'vue'
+<script setup lang="ts">
+import { ref, computed } from 'vue'
 import liff from '@line/liff'
 import axios from 'axios'
+import type { CheckType, GpsCoords } from '@/types'
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api/v1'
 
-// ── 頁面載入時立刻解析 action（不等 liff.init）────────────────────────────────
-// URL 可能是 ?liff.state=%3Faction%3Dclock_out（liff.state 尚未展開）
-// 或已展開的 ?action=clock_out，兩種都處理
-function resolveAction() {
+function resolveAction(): CheckType {
   const sp = new URLSearchParams(window.location.search)
-  // 直接有 action 參數
-  if (sp.get('action')) return sp.get('action')
-  // 從 liff.state 裡解碼
+  if (sp.get('action')) return sp.get('action') as CheckType
   const raw = sp.get('liff.state')
   if (raw) {
     const decoded = decodeURIComponent(raw).replace(/^\?/, '')
-    return new URLSearchParams(decoded).get('action') || 'clock_in'
+    return (new URLSearchParams(decoded).get('action') as CheckType) || 'clock_in'
   }
   return 'clock_in'
 }
 
-const action     = ref(resolveAction())
-const isClockIn  = computed(() => action.value === 'clock_in')
-const label      = computed(() => isClockIn.value ? '上班打卡' : '下班打卡')
-const themeColor = computed(() => isClockIn.value ? '#10b981' : '#f59e0b')
+const action     = ref<CheckType>(resolveAction())
+const isClockIn  = computed<boolean>(() => action.value === 'clock_in')
+const label      = computed<string>(() => isClockIn.value ? '上班打卡' : '下班打卡')
+const themeColor = computed<string>(() => isClockIn.value ? '#10b981' : '#f59e0b')
 
-// ── 狀態 ──────────────────────────────────────────────────────────────────────
-const state      = ref('loading')
-const statusText = ref('初始化中…')
-const resultTime = ref('')
-const errorMsg   = ref('')
-const retryCount = ref(0)
+const state      = ref<'loading' | 'success' | 'error'>('loading')
+const statusText = ref<string>('初始化中…')
+const resultTime = ref<string>('')
+const errorMsg   = ref<string>('')
+const retryCount = ref<number>(0)
 const MAX_RETRY  = 2
 
-// ── 帶重試的 axios ─────────────────────────────────────────────────────────────
-async function axiosWithRetry(fn, retries = MAX_RETRY) {
+async function axiosWithRetry<T>(fn: () => Promise<T>, retries = MAX_RETRY): Promise<T> {
   for (let i = 0; i <= retries; i++) {
     try {
       return await fn()
-    } catch (e) {
-      // 後端回傳的業務錯誤（4xx）不重試
-      if (e?.response?.status) throw e
-      // 網路錯誤最多重試 MAX_RETRY 次
+    } catch (e: unknown) {
+      const err = e as { response?: unknown }
+      if (err?.response) throw e
       if (i === retries) throw e
       await new Promise(r => setTimeout(r, 800 * (i + 1)))
     }
   }
+  throw new Error('unreachable')
 }
 
-// ── 取得 GPS 座標（最多等 10 秒）────────────────────────────────────────────────
-function getLocation() {
+function getLocation(): Promise<GpsCoords> {
   return new Promise((resolve) => {
     if (!navigator.geolocation) { resolve({ lat: null, lng: null }); return }
     navigator.geolocation.getCurrentPosition(
       (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      ()    => resolve({ lat: null, lng: null }),   // 拒絕或逾時也繼續打卡（後端決定）
+      ()    => resolve({ lat: null, lng: null }),
       { timeout: 10000, maximumAge: 0, enableHighAccuracy: true }
     )
   })
 }
 
-// ── 打卡主流程 ─────────────────────────────────────────────────────────────────
-async function doPunch() {
+async function doPunch(): Promise<void> {
   state.value    = 'loading'
   errorMsg.value = ''
 
   try {
-    // 1. 初始化 LIFF
     statusText.value = '取得身份中…'
     await liff.init({ liffId: import.meta.env.VITE_LIFF_ID })
     action.value = resolveAction()
@@ -77,19 +68,16 @@ async function doPunch() {
       return
     }
 
-    // 2. 換後端 JWT（網路錯誤自動重試）
     statusText.value = '驗證身份中…'
     const id_token = liff.getIDToken()
     const { data: authData } = await axiosWithRetry(() =>
       axios.post(`${API_BASE}/auth/line`, { id_token })
     )
-    const token = authData.access_token
+    const token: string = authData.access_token
 
-    // 3. 取得 GPS
     statusText.value = '取得位置中…'
     const { lat, lng } = await getLocation()
 
-    // 4. 打卡（網路錯誤自動重試）
     statusText.value = '打卡中…'
     await axiosWithRetry(() =>
       axios.post(
@@ -99,25 +87,25 @@ async function doPunch() {
       )
     )
 
-    // 5. 成功
     resultTime.value = new Date().toLocaleTimeString('zh-TW', {
       hour: '2-digit', minute: '2-digit', hour12: false,
     })
     state.value = 'success'
 
-  } catch (e) {
-    const serverMsg = e?.response?.data?.detail
-    const isNetwork = !e?.response
+  } catch (e: unknown) {
+    const err = e as { response?: { data?: { detail?: string } }; message?: string }
+    const serverMsg = err?.response?.data?.detail
+    const isNetwork = !err?.response
     errorMsg.value = serverMsg || (isNetwork ? '網路連線失敗，請重試' : '打卡失敗，請再試一次')
     state.value = 'error'
   }
 }
 
-onMounted(doPunch)
+void doPunch()
 
-function retry() { doPunch() }
+function retry(): void { void doPunch() }
 
-function close() {
+function close(): void {
   if (liff.isInClient()) {
     liff.closeWindow()
   }
@@ -127,21 +115,17 @@ function close() {
 <template>
   <div class="punch-wrap" :style="{ '--theme': themeColor }">
 
-    <!-- 上方色塊 -->
     <div class="top-bar">
       <div class="top-label">{{ label }}</div>
     </div>
 
-    <!-- 主內容 -->
     <div class="card">
 
-      <!-- Loading -->
       <template v-if="state === 'loading'">
         <div class="ring"></div>
         <p class="status-txt">{{ statusText }}</p>
       </template>
 
-      <!-- 成功 -->
       <template v-else-if="state === 'success'">
         <div class="icon-circle success">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" width="40" height="40">
@@ -153,7 +137,6 @@ function close() {
         <button class="close-btn" @click="close">關閉</button>
       </template>
 
-      <!-- 失敗 -->
       <template v-else-if="state === 'error'">
         <div class="icon-circle error">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="36" height="36">
@@ -210,7 +193,6 @@ function close() {
   gap: 16px;
 }
 
-/* Loading ring */
 .ring {
   width: 64px;
   height: 64px;
@@ -227,7 +209,6 @@ function close() {
   font-weight: 500;
 }
 
-/* 圖示圓圈 */
 .icon-circle {
   width: 80px;
   height: 80px;

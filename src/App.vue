@@ -1,23 +1,22 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const navigating = ref(false)
-let navTimer = null
+const navigating = ref<boolean>(false)
+let navTimer: ReturnType<typeof setTimeout> | null = null
 
 router.beforeEach(() => {
-  clearTimeout(navTimer)
+  if (navTimer) clearTimeout(navTimer)
   navTimer = setTimeout(() => { navigating.value = true }, 80)
 })
 router.afterEach(() => {
-  clearTimeout(navTimer)
+  if (navTimer) clearTimeout(navTimer)
   navigating.value = false
 })
 </script>
 
 <template>
-  <!-- 路由切換時的遮罩，防止白畫面 -->
   <transition name="nav-fade">
     <div v-if="navigating" class="nav-overlay">
       <div class="nav-spinner"></div>
@@ -32,7 +31,6 @@ router.afterEach(() => {
 </template>
 
 <style>
-/* 全域：確保背景不會露白 */
 html, body, #app {
   background: #1e40af;
 }

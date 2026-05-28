@@ -1,20 +1,20 @@
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import liff from '@line/liff'
-import { postLineLogin } from '@/api/http.js'
-import { useAuthStore } from '@/stores/auth.js'
+import { postLineLogin } from '@/api/http'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const auth = useAuthStore()
-const loading = ref(true)
-const error = ref('')
-const status = ref('載入中')
-const currentTime = ref('')
-let timeout = null
-let clockTimer = null
+const loading = ref<boolean>(true)
+const error = ref<string>('')
+const status = ref<string>('載入中')
+const currentTime = ref<string>('')
+let timeout: ReturnType<typeof setTimeout> | null = null
+let clockTimer: ReturnType<typeof setInterval> | null = null
 
-const statusText = computed(() => error.value || status.value)
+const statusText = computed<string>(() => error.value || status.value)
 
 onMounted(async () => {
   updateClock()
@@ -30,11 +30,11 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  clearTimeout(timeout)
-  clearInterval(clockTimer)
+  if (timeout) clearTimeout(timeout)
+  if (clockTimer) clearInterval(clockTimer)
 })
 
-function updateClock() {
+function updateClock(): void {
   currentTime.value = new Date().toLocaleTimeString('zh-TW', {
     hour: '2-digit',
     minute: '2-digit',
@@ -43,13 +43,12 @@ function updateClock() {
   })
 }
 
-async function autoLogin() {
+async function autoLogin(): Promise<void> {
   loading.value = true
   error.value = ''
   status.value = '載入中'
   let redirectingToLine = false
 
-  // 10 秒逾時保護
   timeout = setTimeout(() => {
     if (redirectingToLine) return
     loading.value = false
@@ -63,13 +62,12 @@ async function autoLogin() {
     if (!liff.isLoggedIn()) {
       redirectingToLine = true
       status.value = '登入中'
-      // 記住目前想去的頁面（hash 部分），登入後回來可以導回去
       const currentHash = window.location.hash
       if (currentHash && currentHash !== '#/' && currentHash !== '#/login') {
         sessionStorage.setItem('intended_hash', currentHash)
       }
       liff.login()
-      return  // 頁面會跳走，保持 loading
+      return
     }
 
     status.value = '登入中'
@@ -81,7 +79,6 @@ async function autoLogin() {
       throw new Error('無法取得 LINE Token')
     }
 
-    // 登入後回到原本想去的頁面
     const intendedHash = sessionStorage.getItem('intended_hash')
     sessionStorage.removeItem('intended_hash')
     if (intendedHash && intendedHash !== '#/login') {
@@ -89,29 +86,28 @@ async function autoLogin() {
     } else {
       await router.replace({ name: 'checkin' })
     }
-  } catch (e) {
-    error.value = e?.response?.data?.detail || e.message || '登入失敗，請再試一次'
+  } catch (e: unknown) {
+    const err = e as { response?: { data?: { detail?: string } }; message?: string }
+    error.value = err?.response?.data?.detail || err.message || '登入失敗，請再試一次'
   } finally {
     if (!redirectingToLine) {
-      clearTimeout(timeout)
+      if (timeout) clearTimeout(timeout)
       loading.value = false
     }
   }
 }
 
-function retryLogin() {
+function retryLogin(): void {
   autoLogin()
 }
 </script>
 
 <template>
   <div class="login-page">
-    <!-- 背景裝飾圓 -->
     <div class="bg-circle top"></div>
     <div class="bg-circle bottom"></div>
 
     <div class="login-card">
-      <!-- Logo -->
       <div class="logo-wrap">
         <el-icon size="40" color="#fff"><Clock /></el-icon>
       </div>
