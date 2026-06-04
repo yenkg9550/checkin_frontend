@@ -7,6 +7,9 @@ export interface User {
   display_name: string
   picture_url: string | null
   role: Role
+  is_active: boolean
+  hire_date: string | null
+  position_id: number | null
   created_at: string
 }
 

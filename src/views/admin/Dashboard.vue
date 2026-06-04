@@ -8,7 +8,7 @@ const router = useRouter()
 const rawRecords = ref<DailyReportRecord[]>([])
 const employees  = ref<Employee[]>([])
 const loading    = ref<boolean>(true)
-const selectedDate = ref<string>(new Date().toISOString().slice(0, 10))
+const selectedDate = ref<string>(new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10))
 
 onMounted(() => loadAll())
 

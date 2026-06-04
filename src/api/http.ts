@@ -2,11 +2,7 @@ import axios from 'axios'
 import type {
   AuthResponse,
   AttendanceRecord,
-  Employee,
   CheckInPayload,
-  OverridePayload,
-  DailyReportRecord,
-  Role,
 } from '@/types'
 
 const TOKEN_KEY = 'lc_token'
@@ -50,14 +46,3 @@ export const fetchTodayStatus = (): Promise<AttendanceRecord[]> =>
 export const fetchMyHistory = (limit = 30): Promise<AttendanceRecord[]> =>
   http.get('/attendance/me', { params: { limit } }).then((r) => r.data)
 
-export const fetchDailyReport = (report_date: string): Promise<DailyReportRecord[]> =>
-  http.get('/admin/report', { params: { report_date } }).then((r) => r.data)
-
-export const fetchEmployees = (): Promise<Employee[]> =>
-  http.get('/admin/employees').then((r) => r.data)
-
-export const updateEmployeeRole = (id: number, role: Role): Promise<Employee> =>
-  http.patch(`/admin/employees/${id}/role`, null, { params: { role } }).then((r) => r.data)
-
-export const postOverride = (payload: OverridePayload): Promise<AttendanceRecord> =>
-  http.post('/admin/override', payload).then((r) => r.data)

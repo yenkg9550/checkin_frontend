@@ -27,18 +27,6 @@ const routes = [
         component: () => import('@/views/History.vue'),
         meta: { title: '打卡紀錄' },
       },
-      {
-        path: 'admin',
-        name: 'admin',
-        component: () => import('@/views/admin/Dashboard.vue'),
-        meta: { title: '後台管理', adminOnly: true },
-      },
-      {
-        path: 'admin/employees',
-        name: 'employees',
-        component: () => import('@/views/admin/Employees.vue'),
-        meta: { title: '員工管理', adminOnly: true },
-      },
     ],
   },
 ]

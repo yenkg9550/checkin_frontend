@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive } from 'vue'
-import { ElMessage } from 'element-plus'
-import { fetchEmployees, updateEmployeeRole, postOverride } from '@/api/http'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { fetchEmployees, updateEmployeeRole, postOverride, deleteEmployee } from '@/api/http'
 import type { Employee, CheckType, Role } from '@/types'
 
 const employees = ref<Employee[]>([])
@@ -42,8 +42,23 @@ async function changeRole(emp: Employee, role: Role): Promise<void> {
 
 function openOverride(emp: Employee): void {
   overrideForm.employee_id = emp.id
-  overrideForm.override_at = new Date().toISOString().slice(0, 16)
+  overrideForm.override_at = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 16)
   overrideDialog.value = true
+}
+
+async function confirmDelete(emp: Employee): Promise<void> {
+  try {
+    await ElMessageBox.confirm(
+      `確定要移除「${emp.display_name}」？此操作將同時清除其所有打卡記錄，且無法復原。`,
+      '移除員工',
+      { confirmButtonText: '確定移除', cancelButtonText: '取消', type: 'warning' }
+    )
+    await deleteEmployee(emp.id)
+    employees.value = employees.value.filter(e => e.id !== emp.id)
+    ElMessage.success('員工已移除')
+  } catch (e) {
+    if (e !== 'cancel') ElMessage.error('移除失敗')
+  }
 }
 
 async function submitOverride(): Promise<void> {
@@ -91,9 +106,10 @@ async function submitOverride(): Promise<void> {
           {{ new Date(row.created_at).toLocaleDateString('zh-TW') }}
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="90">
+      <el-table-column label="操作" width="150">
         <template #default="{ row }">
           <el-button size="small" @click="openOverride(row)">補打卡</el-button>
+          <el-button size="small" type="danger" @click="confirmDelete(row)">移除</el-button>
         </template>
       </el-table-column>
     </el-table>
