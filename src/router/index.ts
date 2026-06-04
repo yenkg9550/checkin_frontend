@@ -11,8 +11,9 @@ const USER_KEY = 'lc_user'
 const routes = [
   { path: '/', redirect: '/login' },
 
-  { path: '/punch',   name: 'punch',   component: Punch,       meta: { public: true } },
-  { path: '/history', name: 'history-liff', component: HistoryLiff, meta: { public: true } },
+  { path: '/punch',    name: 'punch',        component: Punch,       meta: { public: true } },
+  { path: '/history',  name: 'history-liff', component: HistoryLiff, meta: { public: true } },
+  { path: '/schedule', name: 'schedule-liff', component: () => import('@/views/ScheduleLiff.vue'), meta: { public: true } },
 
   { path: '/login', name: 'login', component: Login, meta: { public: true } },
   {
