@@ -59,9 +59,9 @@ async function handleLogout(): Promise<void> {
         <el-icon size="22"><List /></el-icon>
         <span>紀錄</span>
       </router-link>
-      <router-link v-if="auth.isAdmin" to="/app/admin" class="nav-item" :class="{ active: route.name === 'admin' || route.name === 'employees' }">
-        <el-icon size="22"><Setting /></el-icon>
-        <span>管理</span>
+      <router-link to="/app/schedule" class="nav-item" :class="{ active: route.name === 'schedule' }">
+        <el-icon size="22"><Calendar /></el-icon>
+        <span>班表</span>
       </router-link>
     </el-footer>
   </el-container>

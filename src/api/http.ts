@@ -46,3 +46,6 @@ export const fetchTodayStatus = (): Promise<AttendanceRecord[]> =>
 export const fetchMyHistory = (limit = 30): Promise<AttendanceRecord[]> =>
   http.get('/attendance/me', { params: { limit } }).then((r) => r.data)
 
+export const fetchMySchedule = (year: number, month: number) =>
+  http.get('/attendance/my-schedule', { params: { year, month } }).then((r) => r.data)
+

@@ -27,6 +27,12 @@ const routes = [
         component: () => import('@/views/History.vue'),
         meta: { title: '打卡紀錄' },
       },
+      {
+        path: 'schedule',
+        name: 'schedule',
+        component: () => import('@/views/MySchedule.vue'),
+        meta: { title: '我的班表' },
+      },
     ],
   },
 ]
