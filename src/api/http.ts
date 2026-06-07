@@ -49,3 +49,9 @@ export const fetchMyHistory = (limit = 30): Promise<AttendanceRecord[]> =>
 export const fetchMySchedule = (year: number, month: number) =>
   http.get('/attendance/my-schedule', { params: { year, month } }).then((r) => r.data)
 
+export const postOverrideRequest = (payload: { check_type: string; override_at: string; reason: string }) =>
+  http.post('/attendance/override-request', payload).then((r) => r.data)
+
+export const fetchMyOverrideRequests = () =>
+  http.get('/attendance/override-requests').then((r) => r.data)
+
