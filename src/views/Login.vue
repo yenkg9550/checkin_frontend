@@ -21,7 +21,7 @@ onMounted(async () => {
   clockTimer = setInterval(updateClock, 1000)
 
   if (auth.isLoggedIn) {
-    status.value = '進入中'
+    status.value = '正在進入中'
     await router.replace({ name: 'checkin' })
     return
   }
