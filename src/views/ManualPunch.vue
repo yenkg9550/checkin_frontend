@@ -190,11 +190,11 @@ function formatDt(iso: string) {
           <textarea
             class="input textarea"
             v-model="reason"
-            placeholder="請說明補打卡原因"
-            maxlength="200"
+            placeholder="請說明補打卡原因（30字以內）"
+            maxlength="30"
             rows="3"
           ></textarea>
-          <div class="char-count">{{ reason.length }} / 200</div>
+          <div class="char-count">{{ reason.length }} / 30</div>
         </div>
 
         <button
