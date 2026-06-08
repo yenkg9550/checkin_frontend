@@ -148,7 +148,6 @@ function formatDt(iso: string) {
       <p class="result-label">申請已送出</p>
       <p class="hint">待管理員審核後將自動補打卡</p>
       <button class="btn" style="margin-top:8px" @click="backToForm">繼續申請</button>
-      <button class="btn-ghost" @click="close">關閉</button>
     </div>
 
     <!-- 表單 -->

@@ -14,7 +14,8 @@ const routes = [
   { path: '/punch',         name: 'punch',         component: Punch,       meta: { public: true } },
   { path: '/history',       name: 'history-liff',  component: HistoryLiff, meta: { public: true } },
   { path: '/schedule',      name: 'schedule-liff',  component: () => import('@/views/ScheduleLiff.vue'),  meta: { public: true } },
-  { path: '/manual-punch',  name: 'manual-punch-liff', component: () => import('@/views/ManualPunch.vue'), meta: { public: true } },
+  { path: '/manual-punch',  name: 'manual-punch-liff',  component: () => import('@/views/ManualPunch.vue'),   meta: { public: true } },
+  { path: '/leave-request', name: 'leave-request-liff', component: () => import('@/views/LeaveRequest.vue'), meta: { public: true } },
 
   { path: '/login', name: 'login', component: Login, meta: { public: true } },
   {

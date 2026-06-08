@@ -55,3 +55,12 @@ export const postOverrideRequest = (payload: { check_type: string; override_at: 
 export const fetchMyOverrideRequests = () =>
   http.get('/attendance/override-requests').then((r) => r.data)
 
+export const fetchMyLeaveTypes = () =>
+  http.get('/attendance/my-leave-types').then((r) => r.data)
+
+export const postLeaveRequest = (payload: { leave_type_id: number; start_date: string; end_date: string; days: number; reason?: string }) =>
+  http.post('/attendance/leave-request', payload).then((r) => r.data)
+
+export const fetchMyLeaveRequests = () =>
+  http.get('/attendance/leave-requests').then((r) => r.data)
+
