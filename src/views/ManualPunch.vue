@@ -42,7 +42,6 @@ async function init() {
     const { data } = await axios.post(`${API_BASE}/auth/line`, { id_token })
     jwtToken = data.access_token
 
-    // 預設今天
     const now = new Date()
     date.value = now.toLocaleDateString('sv')
     time.value = now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Taipei' })
@@ -216,7 +215,7 @@ function formatDt(iso: string) {
           <div v-else-if="records.length === 0" class="empty-hint">尚無申請紀錄</div>
 
           <div v-else class="record-list">
-            <div v-for="r in records" :key="r.id" class="record-card">
+            <div v-for="r in records.slice(0, 10)" :key="r.id" class="record-card">
               <div class="rec-top">
                 <span class="badge" :style="{ background: typeBg(r.check_type), color: typeClr(r.check_type) }">
                   {{ typeLabel(r.check_type) }}
